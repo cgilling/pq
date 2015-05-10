@@ -7,12 +7,17 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
 
 type Fatalistic interface {
 	Fatal(args ...interface{})
+}
+
+func forceBinaryMode() bool {
+	return os.Getenv("PGTEST_BINARY_MODE") == "on"
 }
 
 func openTestConnConninfo(conninfo string) (*sql.DB, error) {
@@ -30,6 +35,10 @@ func openTestConnConninfo(conninfo string) (*sql.DB, error) {
 
 	if timeout == "" {
 		os.Setenv("PGCONNECT_TIMEOUT", "20")
+	}
+
+	if forceBinaryMode() && !strings.HasPrefix(conninfo, "postgres://") {
+		conninfo = conninfo + " binary_mode=on"
 	}
 
 	return sql.Open("postgres", conninfo)

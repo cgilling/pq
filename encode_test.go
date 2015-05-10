@@ -407,13 +407,13 @@ func TestByteaToText(t *testing.T) {
 	b := []byte("hello world")
 	row := db.QueryRow("SELECT $1::text", b)
 
-	var result []byte
+	var result string
 	err := row.Scan(&result)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if string(result) != string(b) {
+	if result != string(b) {
 		t.Fatalf("expected %v but got %v", b, result)
 	}
 }
@@ -433,6 +433,78 @@ func TestTextToBytea(t *testing.T) {
 
 	if !bytes.Equal(result, []byte(b)) {
 		t.Fatalf("expected %v but got %v", b, result)
+	}
+}
+
+func TestByteaToUUID(t *testing.T) {
+	db := openTestConn(t)
+	defer db.Close()
+
+	b := []byte("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
+	row := db.QueryRow("SELECT $1::uuid", b)
+
+	var result []byte
+	err := row.Scan(&result)
+	if forceBinaryMode() {
+		pqErr := err.(*Error)
+		if pqErr == nil {
+			t.Errorf("Expected to get error")
+		} else if pqErr.Code != "22P03" {
+			t.Fatalf("Expected to get invalid binary encoding error (22P03), got %s", pqErr.Code)
+		}
+	} else {
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if string(result) != string(b) {
+			t.Fatalf("expected %v but got %v", b, result)
+		}
+	}
+}
+
+func TestStringToUUID(t *testing.T) {
+	db := openTestConn(t)
+	defer db.Close()
+
+	s := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+	row := db.QueryRow("SELECT $1::uuid", s)
+
+	var result string
+	err := row.Scan(&result)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result != s {
+		t.Fatalf("expected %v but got %v", s, result)
+	}
+}
+
+func TestByteaToInt(t *testing.T) {
+	db := openTestConn(t)
+	defer db.Close()
+
+	expected := 12345678
+	b := []byte(fmt.Sprintf("%d", expected))
+	row := db.QueryRow("SELECT $1::int", b)
+
+	var result int
+	err := row.Scan(&result)
+	if forceBinaryMode() {
+		pqErr := err.(*Error)
+		if pqErr == nil {
+			t.Errorf("Expected to get error")
+		} else if pqErr.Code != "22P03" {
+			t.Fatalf("Expected to get invalid binary encoding error (22P03), got %s", pqErr.Code)
+		}
+	} else {
+		if err != nil {
+			t.Fatal(err)
+		}
+		if result != expected {
+			t.Fatalf("expected %v but got %v", expected, result)
+		}
 	}
 }
 

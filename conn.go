@@ -594,7 +594,6 @@ func (cn *conn) readExecuteResponse(protocolState string) (res driver.Result, co
 	}
 }
 
-
 func (cn *conn) simpleExec(q string) (res driver.Result, commandTag string, err error) {
 	b := cn.writeBuf('Q')
 	b.string(q)
@@ -748,8 +747,8 @@ func (cn *conn) Query(query string, args []driver.Value) (_ driver.Rows, err err
 
 		st.exec(args)
 		return &rows{
-			cn: cn,
-			cols: st.cols,
+			cn:      cn,
+			cols:    st.cols,
 			rowTyps: st.rowTyps,
 		}, nil
 	}
@@ -1306,8 +1305,8 @@ func (st *stmt) Query(v []driver.Value) (r driver.Rows, err error) {
 
 	st.exec(v)
 	return &rows{
-		cn: st.cn,
-		cols: st.cols,
+		cn:      st.cn,
+		cols:    st.cols,
 		rowTyps: st.rowTyps,
 	}, nil
 }
@@ -1412,11 +1411,11 @@ func (cn *conn) parseComplete(commandTag string) (driver.Result, string) {
 }
 
 type rows struct {
-	cn *conn
-	cols []string
+	cn      *conn
+	cols    []string
 	rowTyps []oid.Oid
-	done bool
-	rb   readBuf
+	done    bool
+	rb      readBuf
 }
 
 func (rs *rows) Close() error {
